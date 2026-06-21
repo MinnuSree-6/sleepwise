@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sleep Calculator</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #eaf4fb 0%, #cfe7f7 100%);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 28px;
+    padding: 40px 36px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(30, 80, 130, 0.15);
+    text-align: center;
+  }
+  .title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 32px;
+    font-weight: 800;
+    color: #1d3f5c;
+    margin: 0;
+  }
+  .subtitle {
+    color: #3a8fc7;
+    font-size: 17px;
+    margin-top: 8px;
+    margin-bottom: 28px;
+  }
+  .tabs {
+    display: flex;
+    background: #eaf4fb;
+    border-radius: 14px;
+    padding: 6px;
+    margin-bottom: 30px;
+  }
+  .tab {
+    flex: 1;
+    padding: 14px 10px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font-size: 17px;
+    font-weight: 600;
+    color: #1d3f5c;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .tab.active {
+    background: #2c7bb5;
+    color: #fff;
+  }
+  label.question {
+    display: block;
+    font-size: 18px;
+    color: #1d3f5c;
+    margin-bottom: 18px;
+    font-weight: 500;
+  }
+  .time-row {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 30px;
+  }
+  .time-row select {
+    font-size: 22px;
+    color: #1d3f5c;
+    border: 2px solid #cfe7f7;
+    background: #f3f9fd;
+    border-radius: 14px;
+    padding: 14px 16px;
+    appearance: none;
+    cursor: pointer;
+    min-width: 80px;
+    text-align: center;
+  }
+  .calc-btn {
+    width: 100%;
+    background: #2c7bb5;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    border: none;
+    border-radius: 14px;
+    padding: 18px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .calc-btn:hover {
+    background: #25699c;
+  }
+  .footnote {
+    margin-top: 24px;
+    color: #3a8fc7;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .results {
+    margin-top: 28px;
+    text-align: left;
+    display: none;
+  }
+  .results.show { display: block; }
+  .result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f3f9fd;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    font-size: 17px;
+    color: #1d3f5c;
+    font-weight: 600;
+  }
+  .result-item span.cycles {
+    font-weight: 400;
+    font-size: 14px;
+    color: #3a8fc7;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1 class="title">🌙 Sleep Calculator</h1>
+    <p class="subtitle">Based on 90-minute sleep cycles</p>
+
+    <div class="tabs">
+      <button class="tab active" id="tabWake" onclick="switchTab('wake')">Wake-up time</button>
+      <button class="tab" id="tabBed" onclick="switchTab('bed')">Bedtime now</button>
+    </div>
+
+    <label class="question" id="questionLabel">What time do you want to wake up?</label>
+
+    <div class="time-row">
+      <select id="hour"></select>
+      <select id="minute">
+        <option value="0">00</option>
+        <option value="15">15</option>
+        <option value="30">30</option>
+        <option value="45">45</option>
+      </select>
+      <select id="ampm">
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+
+    <button class="calc-btn" id="calcBtn" onclick="calculate()">Calculate bedtime 🛏️</button>
+
+    <div class="results" id="results"></div>
+
+    <p class="footnote">Each cycle = 90 minutes &bull; Adults need 5 – 6 cycles per night</p>
+  </div>
+
+<script>
+  let mode = 'wake'; // 'wake' = calculate bedtime, 'bed' = calculate wake-up
+
+  const hourSelect = document.getElementById('hour');
+  for (let h = 1; h <= 12; h++) {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.textContent = h;
+    if (h === 7) opt.selected = true;
+    hourSelect.appendChild(opt);
+  }
+
+  function switchTab(newMode) {
+    mode = newMode;
+    document.getElementById('tabWake').classList.toggle('active', mode === 'wake');
+    document.getElementById('tabBed').classList.toggle('active', mode === 'bed');
+    document.getElementById('questionLabel').textContent =
+      mode === 'wake' ? 'What time do you want to wake up?' : 'What time is it now?';
+    document.getElementById('calcBtn').textContent =
+      mode === 'wake' ? 'Calculate bedtime 🛏️' : 'Calculate wake-up time ⏰';
+    document.getElementById('results').classList.remove('show');
+  }
+
+  function formatTime(date) {
+    let h = date.getHours();
+    let m = date.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    const mStr = m < 10 ? '0' + m : m;
+    return `${h}:${mStr} ${ampm}`;
+  }
+
+  function calculate() {
+    let hour = parseInt(hourSelect.value, 10);
+    const minute = parseInt(document.getElementById('minute').value, 10);
+    const ampm = document.getElementById('ampm').value;
+
+    if (ampm === 'PM' && hour !== 12) hour += 12;
+    if (ampm === 'AM' && hour === 12) hour = 0;
+
+    const base = new Date();
+    base.setHours(hour, minute, 0, 0);
+
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = '';
+
+    const cycles = [6, 5, 4, 3];
+
+    cycles.forEach(c => {
+      const minutesDelta = c * 90 + 15; // +15 min to fall asleep
+      const t = new Date(base);
+      if (mode === 'wake') {
+        t.setMinutes(t.getMinutes() - minutesDelta);
+      } else {
+        t.setMinutes(t.getMinutes() + minutesDelta);
+      }
+      const item = document.createElement('div');
+      item.className = 'result-item';
+      item.innerHTML = `<span>${formatTime(t)}</span><span class="cycles">${c} cycles</span>`;
+      resultsDiv.appendChild(item);
+    });
+
+    resultsDiv.classList.add('show');
+  }
+</script>
+</body>
+</html>
